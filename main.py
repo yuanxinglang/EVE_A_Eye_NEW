@@ -23,10 +23,14 @@ import win32clipboard
 import win32con
 from PIL import Image, ImageFile, UnidentifiedImageError
 from uiautomation.uiautomation import Bitmap
+import pygame
 
 ImageFile.LOAD_TRUNCATED_IMAGES = True
 
-wx_group_name = '狼元星'  # 微信群名， 留空则不发微信     请务必将要发送的群或人的这个聊天窗口设置成独立窗口中打开，并且不要最小化
+# 初始化pygame mixer模块
+pygame.mixer.init()
+
+wx_group_name = 'null'  # 微信群名， 填"null"则不发微信     请务必将要发送的群或人的这个聊天窗口设置成独立窗口中打开，并且不要最小化
 wx_context = '星系警告!!!'  # 要发送的微信消息
 con_val = 0.5  # 阈值：程序执行一遍的间隔时间，单位：秒
 # 路径请勿出现中文
@@ -49,6 +53,10 @@ sendTo = game_send_position['第三频道']  # 默认发送军团频道
 
 mutex = threading.Lock()
 
+def play_alarm():
+    # 加载并播放警报音频
+    pygame.mixer.music.load(os.path.join(path, 'warning.mp3'))
+    pygame.mixer.music.play()
 
 def set_clipboard_file(paths):
     try:
@@ -208,7 +216,7 @@ def listening(tag):
             list_status, list_mac_v = if_img_i(i3, i4)
 
             if list_mac_v != 0.0 and list_mac_v < 0.10:
-                if wx_group_name == '':
+                if wx_group_name == 'null':
                     continue
 
                 if num < 1:
@@ -234,7 +242,7 @@ def listening(tag):
         time.sleep(con_val)
         # 第一次识别后, 判断是否检测舰船列表, 动作结束后将new playerList覆盖掉old
         time.sleep(0.35)
-        crop(774, 502, 956, 537, f'{path}/{tag}_2.png', f'new_{tag}_playerList.png')
+        crop(263, 284, 451, 328, f'{path}/{tag}_2.png', f'new_{tag}_playerList.png')
         i1, i2 = load_image(f"{path}/new_{tag}_playerList.png", f"{path}/old_{tag}_playerList.png")
         list_status, list_mac_v = if_img_i(i1, i2)
 
@@ -247,6 +255,7 @@ def listening(tag):
         # 检测到本地有红白, 发送游戏频道
         if list_status:
             print(tag + '警告')
+            play_alarm()  # 播放警报音频
             send_game_massage(tag)
             cv2.imwrite(f'{path}/old_{tag}_playerList.png', i1, [cv2.IMWRITE_PNG_COMPRESSION, 0])
             time.sleep(5)
